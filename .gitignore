@@ -84,3 +84,9 @@ dmypy.json
 
 # Local development configuration
 local_settings.py
+
+# Logs/history files
+logs/
+history/
+test_logs/
+test_history/

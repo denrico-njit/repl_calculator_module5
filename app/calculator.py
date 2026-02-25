@@ -16,7 +16,7 @@ from app.calculator_memento import CalculatorMemento
 from app.exceptions import OperationError, ValidationError
 from app.history import HistoryObserver
 from app.input_validators import InputValidator
-from app.operations import Operation
+from app.operations import Operation, OperationFactory
 
 # Type aliases for better readability
 Number = Union[int, float, Decimal]
@@ -25,12 +25,13 @@ CalculationResult = Union[Number, str]
 
 class Calculator:
     """
-    Main calculator class implementing multiple design patterns.
-
-    This class serves as the core of the calculator application, managing operations,
-    calculation history, observers, configuration settings, and data persistence.
-    It integrates various design patterns to enhance flexibility, maintainability, and
-    scalability.
+    Facade providing a simplified interface to the following:
+      - CalculatorConfig: configuration and environment management
+      - InputValidator: input parsing and validation
+      - OperationFactory + Operation classes: arithmetic strategy execution
+      - CalculatorMemento: undo/redo state management
+      - HistoryObserver instances: logging and auto-save notifications
+      - pandas CSV read/write: persistent history storage
     """
 
     def __init__(self, config: Optional[CalculatorConfig] = None):
@@ -395,3 +396,22 @@ class Calculator:
         # Restore the history from the memento
         self.history = memento.history.copy()
         return True
+    
+    def calculate(self, operation_type: str, a: Union[str, Number], b: Union[str, Number]) -> CalculationResult:
+        """
+        Simplified Facade method for performing a calculation.
+
+        Combines operation selection and execution into a single call,
+        hiding the Factory and Strategy pattern machinery from the caller.
+
+        Args:
+            operation_type (str): Operation name (e.g., 'add', 'divide')
+            a: First operand
+            b: Second operand
+
+        Returns:
+            CalculationResult: The result of the calculation
+        """
+        operation = OperationFactory.create_operation(operation_type)
+        self.set_operation(operation)
+        return self.perform_operation(a, b)

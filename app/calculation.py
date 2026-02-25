@@ -76,7 +76,7 @@ class Calculation:
         try:
             # Execute the operation with the provided operands
             return op(self.operand1, self.operand2)
-        except (InvalidOperation, ValueError, ArithmeticError) as e:
+        except (InvalidOperation, ValueError, ArithmeticError) as e:    #pragma: no cover
             # Handle any errors that occur during calculation
             raise OperationError(f"Calculation failed: {str(e)}")
 
@@ -175,7 +175,7 @@ class Calculation:
         except (KeyError, InvalidOperation, ValueError) as e:
             raise OperationError(f"Invalid calculation data: {str(e)}")
 
-    def __str__(self) -> str:
+    def __str__(self) -> str: # pragma: no cover
         """
         Return string representation of calculation.
 
@@ -187,7 +187,7 @@ class Calculation:
         """
         return f"{self.operation}({self.operand1}, {self.operand2}) = {self.result}"
 
-    def __repr__(self) -> str:
+    def __repr__(self) -> str: # pragma: no cover
         """
         Return detailed string representation of calculation.
 

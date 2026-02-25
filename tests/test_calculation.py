@@ -55,6 +55,9 @@ def test_unknown_operation():
     with pytest.raises(OperationError, match="Unknown operation"):
         Calculation(operation="Unknown", operand1=Decimal("5"), operand2=Decimal("3"))
 
+def test_equality_with_non_calculation():
+    calc = Calculation(operation="Addition", operand1=Decimal("2"), operand2=Decimal("3"))
+    assert calc.__eq__("not a calculation") == NotImplemented
 
 def test_to_dict():
     calc = Calculation(operation="Addition", operand1=Decimal("2"), operand2=Decimal("3"))
@@ -130,3 +133,4 @@ def test_from_dict_result_mismatch(caplog):
 
     # Assert
     assert "Loaded calculation result 10 differs from computed result 5" in caplog.text
+

@@ -1,5 +1,5 @@
 ########################
-# Calculator REPL       #
+# Calculator REPL      #
 ########################
 
 from decimal import Decimal
@@ -120,12 +120,7 @@ def calculator_repl():
                             print("Operation cancelled")
                             continue
 
-                        # Create the appropriate operation instance using the Factory pattern
-                        operation = OperationFactory.create_operation(command)
-                        calc.set_operation(operation)
-
-                        # Perform the calculation
-                        result = calc.perform_operation(a, b)
+                        result = calc.calculate(command, a, b)
 
                         # Normalize the result if it's a Decimal
                         if isinstance(result, Decimal):

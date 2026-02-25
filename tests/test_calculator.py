@@ -178,3 +178,74 @@ def test_calculator_repl_help(mock_print, mock_input):
 def test_calculator_repl_addition(mock_print, mock_input):
     calculator_repl()
     mock_print.assert_any_call("\nResult: 5")
+
+# Force a logging setup failure to test error handling in _setup_logging
+def test_setup_logging_failure(calculator):
+    with patch('app.calculator.logging.basicConfig', side_effect=Exception("logging error")):
+        with pytest.raises(Exception, match="logging error"):
+            calculator._setup_logging()
+
+# Test history trimming when max_history_size is exceeded
+def test_history_trimming():
+    with TemporaryDirectory() as temp_dir:
+        temp_path = Path(temp_dir)
+        config = CalculatorConfig(base_dir=temp_path, max_history_size=2)
+        with patch.object(CalculatorConfig, 'log_dir', new_callable=PropertyMock) as mock_log_dir, \
+             patch.object(CalculatorConfig, 'log_file', new_callable=PropertyMock) as mock_log_file, \
+             patch.object(CalculatorConfig, 'history_dir', new_callable=PropertyMock) as mock_history_dir, \
+             patch.object(CalculatorConfig, 'history_file', new_callable=PropertyMock) as mock_history_file:
+
+            mock_log_dir.return_value      = temp_path / "logs"
+            mock_log_file.return_value     = temp_path / "logs/calculator.log"
+            mock_history_dir.return_value  = temp_path / "history"
+            mock_history_file.return_value = temp_path / "history/calculator_history.csv"
+
+            calc = Calculator(config=config)
+            operation = OperationFactory.create_operation('add')
+            calc.set_operation(operation)
+            calc.perform_operation(1, 2)
+            calc.perform_operation(3, 4)
+            calc.perform_operation(5, 6)  # this triggers the trim
+            assert len(calc.history) == 2
+
+# Test handling of unexpected errors during operation execution
+def test_perform_operation_unexpected_error(calculator):
+    operation = OperationFactory.create_operation('add')
+    calculator.set_operation(operation)
+    with patch.object(operation, 'execute', side_effect=Exception("unexpected")):
+        with pytest.raises(OperationError, match="Operation failed"):
+            calculator.perform_operation(2, 3)
+
+# Test handling of unexpected errors during history saving
+def test_save_history_failure(calculator):
+    operation = OperationFactory.create_operation('add')
+    calculator.set_operation(operation)
+    calculator.perform_operation(2, 3)
+    with patch('app.calculator.pd.DataFrame.to_csv', side_effect=Exception("disk error")):
+        with pytest.raises(OperationError, match="Failed to save history"):
+            calculator.save_history()
+
+# Test handling of unexpected errors during history loading
+@patch('app.calculator.pd.read_csv')
+@patch('app.calculator.Path.exists', return_value=True)
+def test_load_history_empty_file(mock_exists, mock_read_csv, calculator):
+    mock_read_csv.return_value = pd.DataFrame()
+    calculator.load_history()
+    assert calculator.history == []
+
+# Test handling of invalid data format during history loading
+@patch('app.calculator.pd.read_csv', side_effect=Exception("file error"))
+@patch('app.calculator.Path.exists', return_value=True)
+def test_load_history_failure(mock_exists, mock_read_csv, calculator):
+    with pytest.raises(OperationError, match="Failed to load history"):
+        calculator.load_history()
+
+# Test get_history_dataframe returns correct DataFrame structure
+def test_get_history_dataframe(calculator):
+    operation = OperationFactory.create_operation('add')
+    calculator.set_operation(operation)
+    calculator.perform_operation(2, 3)
+    df = calculator.get_history_dataframe()
+    assert len(df) == 1
+    assert df.iloc[0]['operation'] == 'Addition'
+    assert df.iloc[0]['result'] == '5'

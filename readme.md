@@ -1,6 +1,6 @@
 # Advanced Object-Oriented Calculator
 
-A command-line calculator application built in Python 3.9, demonstrating advanced
+A command-line calculator application built in Python 3.11, demonstrating advanced
 object-oriented design patterns, persistent data management with pandas, and
 comprehensive test coverage via pytest and GitHub Actions.
 
